@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.5.17/dist/vue.js"></script>
+  <script src="./instruments.js"></script>
+</head>
+
+<body>
+  <div id="app">
+    <div style="display: flex;" v-for="(i,idx) in partlist" :key="idx">
+      <div style="width: 30px;">{{idx + 1}}</div>
+      <div style="width: 35px;">{{i.lsb}}</div>
+      <div style="width: 35px;">{{i.msb}}</div>
+      <div style="width: 70px;">{{i.program + 1}}</div>
+      <div>{{programToName(i.msb,i.program)}}</div> 
+    </div>
+  </div>
+</body>
+<script>
+  const app = new Vue({
+    el: '#app',
+    data: {
+      partlist: []
+    },
+    methods: {
+      programToName(msb,programNo) {
+        return instruments[programNo + 1][msb] || '[Emulate] ' + instruments[programNo + 1][0]
+      }
+    }
+  })
+</script>
+<script src="./script.js"></script>
+
+</html>
