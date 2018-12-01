@@ -64,7 +64,9 @@ window.addEventListener("storage", function (event) {
   console.log(event)
   console.log(key)
   if (key === 'input') {
-    inputs[oldValue].onmidimessage = null
+    if(inputs[oldValue] && inputs[oldValue].onmidimessage){
+      inputs[oldValue].onmidimessage = null
+    }
     const midiInput = inputs[newValue]
     const midiOutput = outputs[localStorage.output]
     if (midiInput && midiOutput) {
