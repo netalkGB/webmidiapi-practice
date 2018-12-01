@@ -17,7 +17,7 @@
       <div style="width: 35px;">{{i.lsb}}</div>
       <div style="width: 35px;">{{i.msb}}</div>
       <div style="width: 70px;">{{i.program + 1}}</div>
-      <div>{{programToName(i.msb,i.program)}}</div> 
+      <div>{{programToName(i.msb,i.program,i.isDrum)}}</div>
     </div>
   </div>
 </body>
@@ -28,7 +28,14 @@
       partlist: []
     },
     methods: {
-      programToName(msb,programNo) {
+      programToName(msb, programNo, isDrum) {
+        if (isDrum === true) {
+          if(msb !== 0 || !instruments[programNo + 1]['drum']) {
+            return '[WIP]: [should emulate](drum)'
+          } else {
+            return instruments[programNo + 1]['drum']
+          }
+        }
         return instruments[programNo + 1][msb] || '[Emulate] ' + instruments[programNo + 1][0]
       }
     }

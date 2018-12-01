@@ -1,13 +1,16 @@
 class Channel {
-  constructor(msb, lsb, program) {
+  constructor(msb, lsb, program, channel) {
     this.msb = msb
     this.lsb = lsb
     this.program = program
+    this.isDrum = false
+    this.channel = channel
   }
   reset () {
     this.msb = 0
     this.lsb = 0
     this.program = 0
+    this.isDrum = false
   }
   setBankMSB (param) {
     this.msb = param
@@ -18,17 +21,20 @@ class Channel {
   setInstrument (param) {
     this.program = param
   }
-  toString () {
-    return `BankSelect MSB: ${this.msb}, BankSelect LSB: ${this.lsb}, ProgramNo: ${this.program}, Exists?: ${this.getisExists()}`
+  setIsDrum (param) {
+    this.isDrum = param
   }
-  static makePart ({ bankMSB, bankLSB, programNumber }) {
-    return new Channel(bankMSB, bankLSB, programNumber)
+  toString () {
+    return `BankSelect MSB: ${this.msb}, BankSelect LSB: ${this.lsb}, ProgramNo: ${this.program}, isDrum?: ${this.isDrum()}`
+  }
+  static makePart ({ bankMSB, bankLSB, programNumber, channel }) {
+    return new Channel(bankMSB, bankLSB, programNumber, channel)
   }
 }
 
 let partlist = []
 for (let i = 0; i < 16; i++) {
-  partlist = [...partlist, Channel.makePart({ bankMSB: 0, bankLSB: 0, programNumber: 0 })]
+  partlist = [...partlist, Channel.makePart({ bankMSB: 0, bankLSB: 0, programNumber: 0, channel: i + 1 })]
 }
 console.log(partlist)
 // 
@@ -64,7 +70,7 @@ window.addEventListener("storage", function (event) {
   console.log(event)
   console.log(key)
   if (key === 'input') {
-    if(inputs[oldValue] && inputs[oldValue].onmidimessage){
+    if (inputs[oldValue] && inputs[oldValue].onmidimessage) {
       inputs[oldValue].onmidimessage = null
     }
     const midiInput = inputs[newValue]
@@ -143,9 +149,51 @@ function setOnMidiMessage (midiInput, midiOutput) {
           return
         }
       }
+    } else if (data.length === 11) {
+      if (data[0] === 0xF0 && data[10] === 0xf7) {
+        const hasChecksumError = !checkSysExChecksum(data)
+        const isRolandGS = data[1] === 0x41 && data[2] === 0x10 && data[3] === 0x42 && data[4] === 0x12
+        if (isRolandGS === true) {
+          if (hasChecksumError === false) {
+            const a = data[5]
+            const b = data[6]
+            const c = data[7]
+            const d = data[8]
+            if (a === 0x40 && c === 0x15) {
+              let partNum
+              if(b >= 0x11 && b <= 0x19){
+                partNum = b - 0x10
+              }else if(b >= 0x1A && b <= 0x1F) {
+                partNum = b - 0x10 + 1
+              }else {
+                partNum = 10
+              }
+              const partIdx = partNum  - 1
+              partlist[partIdx].setIsDrum(d > 0)
+            }
+            console.log('SysEx: ' + formatLog(data))
+          } else {
+            console.log('%c[CHECKSUM ERROR] SysEx: ' + formatLog(data), 'color:red;')
+          }
+        }
+      }
     }
     midiOutput.send(data)
   }
+}
+
+function calcChecksum (d) {
+  const a = d[5]
+  const b = d[6]
+  const c = d[7]
+  const data = d[8]
+  const result = 0x80 - (a + b + c + data) % 0x80
+  return result
+}
+
+function checkSysExChecksum (d) {
+  const checksum = d[9]
+  return checksum === calcChecksum(d)
 }
 
 function successCallback (access) {
