@@ -3,7 +3,7 @@ class Channel {
     this.msb = msb
     this.lsb = lsb
     this.program = program
-    this.isDrum = false
+    this.isDrum = channel === 10
     this.channel = channel
   }
   reset () {
@@ -133,8 +133,6 @@ function setOnMidiMessage (midiInput, midiOutput) {
         if (data[1] == 0x00) {
           partlist[channel].setBankMSB(param)
           console.log('[Bank Select MSB] ' + 'Channel: ' + (channel + 1) + ', ' + 'Channel(raw): ' + (channel) + ', Parameter: ' + param)
-          sendEmulatedData(midiOutput, channel, partlist[channel].msb, partlist[channel].lsb, partlist[channel].program)
-          return
         } else if (data[1] == 0x20) {
           partlist[channel].setBankLSB(param)
           const moduleMap = {
@@ -145,9 +143,8 @@ function setOnMidiMessage (midiInput, midiOutput) {
             4: '8850',
           }
           console.log('[Bank Select LSB] ' + 'Channel: ' + (channel + 1) + ', ' + 'Channel(raw): ' + (channel) + ', Parameter: ' + param + ' (' + (moduleMap[param] || '???') + ')')
-          sendEmulatedData(midiOutput, channel, partlist[channel].msb, partlist[channel].lsb, partlist[channel].program)
-          return
         }
+        midiOutput.send(data)
       }
     } else if (data.length === 11) {
       if (data[0] === 0xF0 && data[10] === 0xf7) {
@@ -161,14 +158,14 @@ function setOnMidiMessage (midiInput, midiOutput) {
             const d = data[8]
             if (a === 0x40 && c === 0x15) {
               let partNum
-              if(b >= 0x11 && b <= 0x19){
+              if (b >= 0x11 && b <= 0x19) {
                 partNum = b - 0x10
-              }else if(b >= 0x1A && b <= 0x1F) {
+              } else if (b >= 0x1A && b <= 0x1F) {
                 partNum = b - 0x10 + 1
-              }else {
+              } else {
                 partNum = 10
               }
-              const partIdx = partNum  - 1
+              const partIdx = partNum - 1
               partlist[partIdx].setIsDrum(d > 0)
             }
             console.log('SysEx: ' + formatLog(data))
