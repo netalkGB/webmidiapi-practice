@@ -10,7 +10,7 @@ class Channel {
     this.msb = 0
     this.lsb = 0
     this.program = 0
-    this.isDrum = channel === 10
+    this.isDrum = this.channel === 10
   }
   setBankMSB (param) {
     this.msb = param
