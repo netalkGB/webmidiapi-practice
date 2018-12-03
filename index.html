@@ -12,6 +12,11 @@
 
 <body>
   <div id="app">
+
+    <div>
+      <label for="checkbox">force 55map(Bank Select LSB = 1):</label>
+      <input type="checkbox" id="checkbox" v-model="force55Map">
+    </div>
     <div style="display: flex;" v-for="(i,idx) in partlist" :key="idx">
       <div style="width: 30px;">{{idx + 1}}</div>
       <div style="width: 35px;">{{i.lsb}}</div>
@@ -25,12 +30,13 @@
   const app = new Vue({
     el: '#app',
     data: {
-      partlist: []
+      partlist: [],
+      force55Map: false
     },
     methods: {
       programToName(msb, programNo, isDrum) {
         if (isDrum === true) {
-          if(msb !== 0 || !instruments[programNo + 1]['drum']) {
+          if (msb !== 0 || !instruments[programNo + 1]['drum']) {
             return '[WIP]: [should emulate](drum)'
           } else {
             return instruments[programNo + 1]['drum']

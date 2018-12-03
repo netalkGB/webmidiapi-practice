@@ -31,16 +31,17 @@ class Channel {
     return new Channel(bankMSB, bankLSB, programNumber, channel)
   }
 }
-
 let partlist = []
 for (let i = 0; i < 16; i++) {
   partlist = [...partlist, Channel.makePart({ bankMSB: 0, bankLSB: 0, programNumber: 0, channel: i + 1 })]
 }
 console.log(partlist)
 // 
+app.force55Map = false
 app.partlist = partlist
 app.instuments = instruments
 // 
+
 let inputs = []
 let outputs = []
 
@@ -49,20 +50,13 @@ function sendEmulatedData (sender, channel, bmsb, blsb, progNum) {
   const PCCh = 0xC0 + channel
   const PCProgNum = progNum
   const BSCh = 0xB0 + channel
-  const BSLParam = blsb
-  const BSMParam = bmsb
   const instrument = instruments[progNum + 1][bmsb]
-  if (!instrument) {
-    sender.send([BSCh, 0x20, BSLParam])
-    sender.send([BSCh, 0x00, 0x00])
-    sender.send([PCCh, PCProgNum])
-    console.log(`%cEmulate: Channel: ${channel + 1}, Bank Select LSB: ${BSLParam}, Bank Select MSB(fake): 0, Program Change: ${PCProgNum}`, 'color: red;')
-  } else {
-    sender.send([BSCh, 0x20, BSLParam])
-    sender.send([BSCh, 0x00, BSMParam])
-    sender.send([PCCh, PCProgNum])
-    console.log(`%cEmulate: Channel: ${channel + 1}, Bank Select LSB: ${BSLParam}, Bank Select MSB: ${BSMParam}, Program Change: ${PCProgNum}`, 'color: blue;')
-  }
+  const BSLParam = app.force55Map === true ? 1 : blsb
+  const BSMParam = !instrument ? 0x00 : bmsb
+  sender.send([BSCh, 0x20, BSLParam])
+  sender.send([BSCh, 0x00, BSMParam])
+  sender.send([PCCh, PCProgNum])
+  console.log(`%cEmulate: Channel: ${channel + 1}, Bank Select LSB${app.force55Map ? '(fake)' : ''}: ${BSLParam}, Bank Select MSB${!instrument ? '(fake)' : ''}: ${BSMParam}, Program Change: ${PCProgNum}`, (app.force55Map || !instrument) ? 'color: red;' : 'color: blue;')
 }
 
 window.addEventListener("storage", function (event) {
